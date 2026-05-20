@@ -1,0 +1,45 @@
+#include <opencv2/opencv.hpp>
+#include <iostream>
+
+using namespace cv;
+using namespace std;
+
+int main()
+{
+    // 1. 영상 로드
+    Mat src = imread("rose.bmp", IMREAD_GRAYSCALE);
+    if (src.empty()) {
+        cerr << "Image load failed!" << endl;
+        return -1;
+    }
+    imshow("src", src);
+
+    // 연산을 누적할 dst 행렬을 원본으로 초기화
+    Mat dst = src.clone();
+
+    // 3x3 샤프닝 마스크 정의
+    float weights[9] = { -1, -1, -1,
+                         -1,  9, -1,
+                         -1, -1, -1 };
+    Mat mask = Mat(3, 3, CV_32F, weights);
+
+    // 2. 샤프닝 필터를 1회부터 5회까지 반복 적용
+    for (int i = 1; i <= 5; i++) {
+        // [중요] dst를 입력으로 받아 다시 dst에 덮어씌움으로써 누적 연산 수행
+        filter2D(dst, dst, -1, mask);
+
+        // 현재 반복 횟수를 화면 좌상단에 표시
+        String desc = format("Sharpening Iteration: %d", i);
+
+        // 글씨가 번지는 걸 막기 위해 임시 출력용 행렬 생성
+        Mat display_mat = dst.clone();
+        putText(display_mat, desc, Point(10, 30), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(255), 1, LINE_AA);
+
+        // 결과 창 출력 (키를 누를 때마다 다음 횟수로 진행)
+        String win_name = format("sharpen_iter_%d", i);
+        imshow(win_name, display_mat);
+        waitKey(0);
+    }
+
+    return 0;
+}
